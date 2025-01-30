@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glide 페이지 캡처 중...</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <script>
+        async function captureAndDownload() {
+            const { jsPDF } = window.jspdf;
+
+            // URL 파라미터에서 Glide 페이지 URL 가져오기
+            const params = new URLSearchParams(window.location.search);
+            const glideUrl = params.get("url");
+
+            if (!glideUrl) {
+                alert("URL을 찾을 수 없습니다.");
+                return;
+            }
+
+            // 새로운 창에서 Glide 페이지 열기
+            const win = window.open(glideUrl, "_blank", "width=1280,height=800");
+
+            // 일정 시간 후 캡처 (Glide 페이지가 로드될 시간을 고려)
+            setTimeout(async () => {
+                try {
+                    const canvas = await html2canvas(win.document.body, { scrollY: -window.scrollY });
+                    const imgData = canvas.toDataURL("image/png");
+
+                    // PDF 생성 및 이미지 추가
+                    const pdf = new jsPDF("p", "mm", "a4");
+                    const imgWidth = 210;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+                    pdf.save("glide_screenshot.pdf");
+
+                    // 창 자동 닫기
+                    win.close();
+                } catch (error) {
+                    console.error("캡처 실패:", error);
+                    alert("스크린샷을 캡처하는데 실패했습니다.");
+                }
+            }, 5000); // 5초 후 실행 (Glide 페이지 로딩 시간 고려)
+        }
+
+        // HTML이 로드되자마자 실행
+        window.onload = captureAndDownload;
+    </script>
+</body>
+</html>
